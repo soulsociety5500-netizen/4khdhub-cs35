@@ -13,9 +13,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Clone CS3 plugin template
+      - name: Clone CS3 extensions template
         run: |
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/recloudstream/cloudstream-extensions-template cs3-template
+          git clone https://github.com/recloudstream/extensions cs3-template
 
       - name: Copy extension into template
         run: |
