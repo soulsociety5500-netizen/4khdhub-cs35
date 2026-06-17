@@ -1,0 +1,8 @@
+{
+  "name": "4KHDHub Repo",
+  "description": "CloudStream extension for 4KHDHub — Movies & TV Shows in 4K, HDR, 1080p",
+  "manifestVersion": 2,
+  "pluginLists": [
+    "https://soulsociety5500-netizen.github.io/4khdhub-cs35/plugins.json"
+  ]
+}
