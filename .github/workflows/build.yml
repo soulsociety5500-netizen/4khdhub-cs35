@@ -15,7 +15,7 @@ jobs:
 
       - name: Clone CS3 plugin template
         run: |
-          git clone https://github.com/recloudstream/cloudstream-extensions-template cs3-template
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/recloudstream/cloudstream-extensions-template cs3-template
 
       - name: Copy extension into template
         run: |
