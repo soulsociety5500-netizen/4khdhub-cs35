@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Clone CS3 extensions template
+      - name: Clone CS3 extensions repo
         run: |
           git clone https://github.com/recloudstream/extensions cs3-template
 
@@ -22,6 +22,9 @@ jobs:
           mkdir -p cs3-template/FourKHDHub/src/main/kotlin/com/lagradost
           cp src/main/kotlin/com/lagradost/*.kt cs3-template/FourKHDHub/src/main/kotlin/com/lagradost/
           cp build.gradle.kts cs3-template/FourKHDHub/build.gradle.kts
+          # Add FourKHDHub to settings.gradle
+          echo "" >> cs3-template/settings.gradle
+          echo 'include(":FourKHDHub")' >> cs3-template/settings.gradle
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
