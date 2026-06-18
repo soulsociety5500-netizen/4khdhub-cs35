@@ -1,51 +1,86 @@
+package com.lagradost
 
-name: Build & Deploy CloudStream Extension
+import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.utils.*
+import org.jsoup.nodes.Element
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+class FourKHDHubPlugin : MainAPI() {
+    override var mainUrl = "https://4khdhub.one"
+    override var name = "4KHDHub"
+    override val hasMainPage = true
+    override val hasDownloadSupport = true
+    override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries)
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    override val mainPage = mainPageOf(
+        "$mainUrl/category/movies/" to "Latest Movies",
+        "$mainUrl/category/series/" to "Latest Series",
+        "$mainUrl/category/hindi-movies/" to "Hindi Movies",
+        "$mainUrl/category/english-movies/" to "English Movies",
+        "$mainUrl/category/2160p-HDR/" to "4K HDR",
+    )
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+    override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+        val url = if (page == 1) request.data else "${request.data}page/$page/"
+        val doc = app.get(url).document
+        val items = doc.select("article.post").mapNotNull { it.toSearchResult() }
+        return newHomePageResponse(request.name, items)
+    }
 
-      - name: Clone CS3 plugin template
-        run: |
-          git clone https://github.com/recloudstream/cloudstream-extensions-template cs3-template
+    override suspend fun search(query: String): List<SearchResponse> {
+        val doc = app.get("$mainUrl/?s=${query.replace(" ", "+")}").document
+        return doc.select("article.post").mapNotNull { it.toSearchResult() }
+    }
 
-      - name: Copy extension into template
-        run: |
-          mkdir -p cs3-template/FourKHDHub/src/main/kotlin/com/lagradost
-          cp src/main/kotlin/com/lagradost/*.kt cs3-template/FourKHDHub/src/main/kotlin/com/lagradost/
-          cp build.gradle.kts cs3-template/FourKHDHub/build.gradle.kts
+    override suspend fun load(url: String): LoadResponse? {
+        val doc = app.get(url).document
+        val title = doc.selectFirst("h1.entry-title")?.text()?.trim()
+            ?: doc.selectFirst("h1")?.text()?.trim() ?: return null
+        val poster = doc.selectFirst("meta[property='og:image']")?.attr("content")
+        val description = doc.selectFirst(".entry-content p")?.text()?.trim()
+        val isSeries = url.contains("-series-")
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+        val links = doc.select("a[href*='hubcloud'], a[href*='hubdrive'], a[href*='gdflix']")
+            .map { it.attr("href") }
 
-      - name: Build .cs3 plugin
-        working-directory: cs3-template
-        run: |
-          chmod +x gradlew
-          ./gradlew :FourKHDHub:make
+        return if (isSeries) {
+            val episodes = links.mapIndexed { i, link ->
+                Episode(link, "Episode ${i + 1}", 1, i + 1)
+            }
+            newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
+                this.posterUrl = poster
+                this.plot = description
+            }
+        } else {
+            val dataUrl = links.firstOrNull() ?: url
+            newMovieLoadResponse(title, url, TvType.Movie, dataUrl) {
+                this.posterUrl = poster
+                this.plot = description
+            }
+        }
+    }
 
-      - name: Collect build output
-        run: |
-          mkdir -p dist
-          cp cs3-template/FourKHDHub/build/*.cs3 dist/FourKHDHubPlugin.cs3
-          cp plugins.json dist/plugins.json
-          cp repo.json dist/repo.json
+    override suspend fun loadLinks(
+        data: String,
+        isCasting: Boolean,
+        subtitleCallback: (SubtitleFile) -> Unit,
+        callback: (ExtractorLink) -> Unit
+    ): Boolean {
+        loadExtractor(data, mainUrl, subtitleCallback, callback)
+        return true
+    }
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
+    private fun Element.toSearchResult(): SearchResponse? {
+        val a = selectFirst("a") ?: return null
+        val href = a.attr("href").takeIf { it.isNotBlank() } ?: return null
+        val title = selectFirst("h2, h3, .entry-title")?.text()?.trim()
+            ?: a.attr("title").ifBlank { return null }
+        val poster = selectFirst("img")?.let {
+            it.attr("data-src").ifBlank { it.attr("src") }
+        }
+        return if (href.contains("-series-")) {
+            newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = poster }
+        } else {
+            newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = poster }
+        }
+    }
+}
