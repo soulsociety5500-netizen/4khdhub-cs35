@@ -23,7 +23,10 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Clone CS3 template
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           git clone https://github.com/Blatzar/CloudstreamPlugins cs3-template
 
       - name: Copy extension into template
