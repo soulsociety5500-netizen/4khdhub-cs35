@@ -10,8 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout our repo
         uses: actions/checkout@v3
+        with:
+          path: our-repo
+
+      - name: Checkout CS3 template
+        uses: actions/checkout@v3
+        with:
+          repository: Blatzar/CloudstreamPlugins
+          path: cs3-template
+
+      - name: Copy extension into template
+        run: |
+          mkdir -p cs3-template/FourKHDHub/src/main/kotlin/com/lagradost
+          cp our-repo/src/main/kotlin/com/lagradost/*.kt cs3-template/FourKHDHub/src/main/kotlin/com/lagradost/
+          cp our-repo/build.gradle.kts cs3-template/FourKHDHub/build.gradle.kts
+          echo "" >> cs3-template/settings.gradle
+          echo 'include(":FourKHDHub")' >> cs3-template/settings.gradle
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -21,21 +37,6 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Clone CS3 template
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
-          git clone https://github.com/Blatzar/CloudstreamPlugins cs3-template
-
-      - name: Copy extension into template
-        run: |
-          mkdir -p cs3-template/FourKHDHub/src/main/kotlin/com/lagradost
-          cp src/main/kotlin/com/lagradost/*.kt cs3-template/FourKHDHub/src/main/kotlin/com/lagradost/
-          cp build.gradle.kts cs3-template/FourKHDHub/build.gradle.kts
-          echo "" >> cs3-template/settings.gradle
-          echo 'include(":FourKHDHub")' >> cs3-template/settings.gradle
 
       - name: Build .cs3 plugin
         working-directory: cs3-template
@@ -47,8 +48,8 @@ jobs:
         run: |
           mkdir -p dist
           find cs3-template -name "*.cs3" -exec cp {} dist/FourKHDHubPlugin.cs3 \;
-          cp plugins.json dist/plugins.json
-          cp repo.json dist/repo.json
+          cp our-repo/plugins.json dist/plugins.json
+          cp our-repo/repo.json dist/repo.json
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
