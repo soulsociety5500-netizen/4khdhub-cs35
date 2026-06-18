@@ -1,12 +1,10 @@
-// Use the exact same format as recloudstream/extensions template
-
 version = 1
 
 cloudstream {
-    description = "Movies & TV Shows from 4KHDHub — 4K HDR, 1080p, Hindi, English, Tamil, Telugu"
+    description = "4KHDHub - Movies & TV Shows in 4K, HDR, 1080p"
     authors = listOf("soulsociety5500-netizen")
+    language = "hi"
     status = 1
     tvTypes = listOf("Movie", "TvSeries")
-    iconUrl = "https://4khdhub.one/images/4KHDHUB-Dark-Logo.png"
-    language = "hi"
+    iconUrl = "https://4khdhub.one/wp-content/uploads/2023/01/cropped-4kHDHub-logo-32x32.png"
 }
