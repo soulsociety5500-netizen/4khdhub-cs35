@@ -2,6 +2,7 @@ package com.lagradost
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.app
 import org.jsoup.nodes.Element
 
 class FourKHDHubPlugin : MainAPI() {
@@ -33,8 +34,7 @@ class FourKHDHubPlugin : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse? {
         val doc = app.get(url).document
-        val title = doc.selectFirst("h1.entry-title")?.text()?.trim()
-            ?: doc.selectFirst("h1")?.text()?.trim() ?: return null
+        val title = doc.selectFirst("h1.entry-title, h1")?.text()?.trim() ?: return null
         val poster = doc.selectFirst("meta[property='og:image']")?.attr("content")
         val description = doc.selectFirst(".entry-content p")?.text()?.trim()
         val isSeries = url.contains("-series-")
@@ -44,15 +44,18 @@ class FourKHDHubPlugin : MainAPI() {
 
         return if (isSeries) {
             val episodes = links.mapIndexed { i, link ->
-                Episode(link, "Episode ${i + 1}", 1, i + 1)
+                newEpisode(link) {
+                    name = "Episode ${i + 1}"
+                    season = 1
+                    episode = i + 1
+                }
             }
             newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
                 this.posterUrl = poster
                 this.plot = description
             }
         } else {
-            val dataUrl = links.firstOrNull() ?: url
-            newMovieLoadResponse(title, url, TvType.Movie, dataUrl) {
+            newMovieLoadResponse(title, url, TvType.Movie, links.firstOrNull() ?: url) {
                 this.posterUrl = poster
                 this.plot = description
             }
@@ -78,9 +81,13 @@ class FourKHDHubPlugin : MainAPI() {
             it.attr("data-src").ifBlank { it.attr("src") }
         }
         return if (href.contains("-series-")) {
-            newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = poster }
+            newTvSeriesSearchResponse(title, href, TvType.TvSeries) {
+                this.posterUrl = poster
+            }
         } else {
-            newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = poster }
+            newMovieSearchResponse(title, href, TvType.Movie) {
+                this.posterUrl = poster
+            }
         }
     }
 }
