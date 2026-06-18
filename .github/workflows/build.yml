@@ -15,19 +15,11 @@ jobs:
         with:
           path: our-repo
 
-      - name: Checkout CS3 template
+      - name: Checkout CS3 TestPlugins template
         uses: actions/checkout@v3
         with:
-          repository: Blatzar/CloudstreamPlugins
+          repository: recloudstream/TestPlugins
           path: cs3-template
-
-      - name: Copy extension into template
-        run: |
-          mkdir -p cs3-template/FourKHDHub/src/main/kotlin/com/lagradost
-          cp our-repo/src/main/kotlin/com/lagradost/*.kt cs3-template/FourKHDHub/src/main/kotlin/com/lagradost/
-          cp our-repo/build.gradle.kts cs3-template/FourKHDHub/build.gradle.kts
-          echo "" >> cs3-template/settings.gradle
-          echo 'include(":FourKHDHub")' >> cs3-template/settings.gradle
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -37,6 +29,13 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Copy extension into template
+        run: |
+          mkdir -p cs3-template/FourKHDHub/src/main/kotlin/com/lagradost
+          cp our-repo/src/main/kotlin/com/lagradost/*.kt cs3-template/FourKHDHub/src/main/kotlin/com/lagradost/
+          cp our-repo/build.gradle.kts cs3-template/FourKHDHub/build.gradle.kts
+          echo 'include(":FourKHDHub")' >> cs3-template/settings.gradle
 
       - name: Build .cs3 plugin
         working-directory: cs3-template
