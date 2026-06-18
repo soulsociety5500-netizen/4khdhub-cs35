@@ -13,10 +13,18 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Clone working CS3 plugin template
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Clone CS3 template
         run: |
-          git clone --branch builds https://github.com/MustardChef/TestPlugin cs3-template || \
-          git clone https://github.com/MustardChef/TestPlugin cs3-template
+          git clone https://github.com/Blatzar/CloudstreamPlugins cs3-template
 
       - name: Copy extension into template
         run: |
@@ -25,3 +33,23 @@ jobs:
           cp build.gradle.kts cs3-template/FourKHDHub/build.gradle.kts
           echo "" >> cs3-template/settings.gradle
           echo 'include(":FourKHDHub")' >> cs3-template/settings.gradle
+
+      - name: Build .cs3 plugin
+        working-directory: cs3-template
+        run: |
+          chmod +x gradlew
+          ./gradlew :FourKHDHub:make --stacktrace
+
+      - name: Collect build output
+        run: |
+          mkdir -p dist
+          find cs3-template -name "*.cs3" -exec cp {} dist/FourKHDHubPlugin.cs3 \;
+          cp plugins.json dist/plugins.json
+          cp repo.json dist/repo.json
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
