@@ -1,0 +1,17 @@
+[
+  {
+    "url": "https://soulsociety5500-netizen.github.io/4khdhub-cs35/FourKHDHubPlugin.cs3",
+    "tvTypes": ["Movie", "TvSeries"],
+    "iconUrl": "https://4khdhub.one/wp-content/uploads/2023/01/cropped-4kHDHub-logo-32x32.png",
+    "name": "4KHDHub",
+    "apiVersion": 4,
+    "repositoryUrl": "https://github.com/soulsociety5500-netizen/4khdhub-cs35",
+    "fileSize": 0,
+    "status": 1,
+    "version": 1,
+    "authors": ["soulsociety5500-netizen"],
+    "description": "Movies & TV Shows from 4KHDHub",
+    "language": "hi",
+    "internalName": "FourKHDHubPlugin"
+  }
+]
